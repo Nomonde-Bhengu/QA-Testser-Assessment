@@ -1,0 +1,142 @@
+ANSWERS TO THE SQL PART: 
+
+Q1) C
+Q2) A
+Q3) 
+Q4) One-to-many
+Q5) 
+Q6) C
+Q7) A
+Q8) A
+Q9) D
+Q10) A
+Q11) B
+Q12) D
+Q13) SELECT * 
+     FROM Customers;
+Q14) SELECT CustomerName, Address 
+     FROM Customers;
+Q15) SELECT DISTINCT Country
+     FROM Customers;
+Q16) SELECT *
+     FROM Products
+     WHERE Price > 20;
+Q17) SELECT *
+     FROM Customers
+     WHERE Address IS NULL;
+Q18) SELECT *
+     FROM Customers
+     WHERE Country = 'Germany' OR Country = 'UK'; -- or WHERE Country IN ('Germany', 'UK')
+Q19) SELECT *
+     FROM Customers
+     WHERE Country <> 'USA'; -- or WHERE Country != 'USA'
+Q20) SELECT *
+     FROM Products
+     WHERE SupplierID = 1 AND CategoryID = 2;
+Q21) SELECT *
+     FROM Products
+     ORDER BY Price DESC;
+Q22) SELECT TOP 50 * -- (SQL Server / T-SQL); use LIMIT 50 in MySQL/PostgreSQL
+     FROM Customers;
+Q23) SELECT MAX(Price)
+     FROM Products;
+Q24) C
+Q25) SELECT AVG(Price)
+     FROM Products;
+Q26) SELECT SUM(Quantity)
+     FROM OrderDetails;
+Q27) SELECT *
+     FROM Customers
+     WHERE CustomerName LIKE 'b%';
+Q28) SELECT *
+     FROM Customers
+     WHERE CustomerName LIKE 'b%o';
+Q29) SELECT *
+     FROM Customers
+     WHERE CustomerName LIKE '_b%';
+Q30) SELECT *
+     FROM Customers
+     WHERE Country IN ('Germany', 'UK', 'USA');
+Q31) SELECT *
+     FROM Products
+     WHERE Price BETWEEN 5 AND 25;
+Q32) A
+Q33)
+Q34)
+Q35) SELECT Customers.CustomerName, Orders.OrderID
+     FROM Customers
+     LEFT JOIN Orders ON Orders.CustomerID = Customers.CustomerID;
+Q36) SELECT Customers.CustomerName, Orders.OrderID
+     FROM Customers
+     FULL OUTER JOIN Orders ON Orders.CustomerID = Customers.CustomerID;
+Q37) D
+Q38) SELECT ProductID, SUM(Quantity) AS Overall_Quantity
+     FROM OrderDetails
+     GROUP BY ProductID
+     ORDER BY Overall_Quantity DESC;
+Q39) SELECT ProductID, SUM(Quantity) AS Overall_Quantity
+     FROM OrderDetails
+     GROUP BY ProductID
+     HAVING SUM(Quantity) > 100
+     ORDER BY Overall_Quantity DESC;
+Q40) SELECT ProductID, Price,
+     CASE
+         WHEN Price < 10 THEN 'Cheap'
+         ELSE 'Expensive'
+     END AS Price_Level
+FROM Products;
+
+
+Final Section:
+
+USE master;
+GO
+
+WITH PercentageMarks AS (
+    SELECT
+        CAST(Mark / 10.0 AS DECIMAL(5, 2)) AS Percentage
+    FROM dbo.FinalMarks
+),
+Categorized AS (
+    SELECT
+        Percentage,
+        CASE
+            WHEN Percentage > 94.00 THEN 'Summa Cum Laude'
+            WHEN Percentage >= 85.00 AND Percentage < 94.00 THEN 'Magna Cum Laude'
+            WHEN Percentage >= 75.00 AND Percentage < 84.00 THEN 'Cum Laude'
+        END AS Distinction,
+        CASE
+            WHEN Percentage > 94.00 THEN 1
+            WHEN Percentage >= 85.00 AND Percentage < 94.00 THEN 2
+            WHEN Percentage >= 75.00 AND Percentage < 84.00 THEN 3
+        END AS SortOrder
+    FROM PercentageMarks
+    WHERE Percentage > 94.00
+       OR (Percentage >= 85.00 AND Percentage < 94.00)
+       OR (Percentage >= 75.00 AND Percentage < 84.00)
+)
+SELECT
+    Distinction,
+    COUNT(*) AS [Count],
+    CAST(MAX(Percentage) AS DECIMAL(10, 2)) AS [Highest Percentage in range]
+FROM Categorized
+GROUP BY Distinction, SortOrder
+ORDER BY SortOrder;
+GO
+
+
+2. 
+USE master;
+GO
+
+SELECT TOP 10
+    ROW_NUMBER() OVER (ORDER BY Mark DESC, StudentNumber ASC) AS Position,
+    CASE
+        WHEN CAST(SUBSTRING(IDNumber, 7, 4) AS INT) >= 5000 THEN 'Mr'
+        ELSE 'Ms'
+    END AS Title,
+    [Name] + ' ' + Surname AS [Student Full Name],
+    Mark
+FROM dbo.FinalMarks
+ORDER BY Mark DESC, StudentNumber ASC;
+GO
