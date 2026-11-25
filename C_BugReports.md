@@ -15,9 +15,33 @@
 **Expected:** Code should be delivered out-of-band (SMS/email/authenticator).
 **Actual:** Code is printed on screen.
 
-**Severity:** Low (by design for practice site)
-**Priority:** Low
-**Note:** Documented as environment limitation, not a defect in the application under test.
+*Severity:* Low (by design for practice site)
+*Priority:* Low
+
+
+---
+
+### Bug 2 (Security Observation): No visible rate limiting or attempt counter on OTP entry
+**Title:** No rate-limit feedback on repeated wrong OTP submissions
+
+**Summary:** Submitting multiple wrong codes in succession shows an error each time but no lockout or delay feedback. For a real 2FA system, this would enable brute-force (10^6 space).
+
+**Steps:**
+1. Complete step 1 with valid credentials
+2. Submit wrong code 3–5 times consecutively
+
+**Expected:** After N failures, account should be temporarily locked or submission delayed.
+**Actual:** Error shown each time; no throttling observed.
+
+**Severity:** High (if this were production; for practice site, informational)
+**Priority:** High
+**Note:** Within the 10-attempt limit per assessment instructions.
+
+---
+
+
+
+
 ---
 
 
