@@ -4,7 +4,14 @@ Q1) C
 Q2) A
 Q3) 
 Q4) One-to-many
-Q5) 
+Q5) CREATE TABLE Products (
+    ProductID INT PRIMARY KEY,
+    ProductName VARCHAR(255),
+    SupplierID INT,
+    CategoryID INT,
+    Unit VARCHAR(255),
+    Price INT
+);
 Q6) C
 Q7) A
 Q8) A
@@ -61,8 +68,12 @@ Q31) SELECT *
      FROM Products
      WHERE Price BETWEEN 5 AND 25;
 Q32) A
-Q33)
-Q34)
+Q33) SELECT Orders.OrderID, Customers.CustomerName
+     FROM Orders
+     INNER JOIN Customers ON Orders.CustomerID = Customers.CustomerID;
+Q34) SELECT Customers.CustomerName, Orders.OrderID
+     FROM Customers
+     LEFT JOIN Orders ON Customers.CustomerID = Orders.CustomerID;
 Q35) SELECT Customers.CustomerName, Orders.OrderID
      FROM Customers
      LEFT JOIN Orders ON Orders.CustomerID = Customers.CustomerID;
