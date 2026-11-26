@@ -1,144 +1,121 @@
 import { Page, expect } from '@playwright/test';
 
+/**
+ * Page Object Model for the two-factor authentication flow.
+ *
+ * Encapsulates navigation and interactions for the login page
+ * (username/password) and the OTP verification page.
+ */
 export class TwoFactorPage {
+  /**
+   * @param page - Playwright `Page` instance used to drive the browser.
+   */
   constructor(private page: Page) {}
 
-  // Step 1: Login form at /login
+  /**
+   * Navigates to the two-factor login page.
+   */
   async goto() {
-    await this.page.goto('/login');
+    await this.page.goto('/two_factor');
   }
 
+  /**
+   * Returns the locator for the username input field (matched by its label).
+   */
   async getUsernameField() {
     return this.page.getByLabel('Username');
   }
 
+  /**
+   * Returns the locator for the password input field (matched by its label).
+   */
   async getPasswordField() {
     return this.page.getByLabel('Password');
   }
 
+  /**
+   * Returns the locator for the "Next" button that submits credentials.
+   */
   async getNextButton() {
-    // The practice site uses "Login" as the button text, not "Next"
-    return this.page.getByRole('button', { name: /Login|Next/i });
+    return this.page.getByRole('button', { name: 'Next' });
   }
 
+  /**
+   * Fills in the username and password fields and clicks the "Next" button
+   * to submit the first step of the login flow.
+   *
+   * @param username - Username to enter.
+   * @param password - Password to enter.
+   */
   async submitCredentials(username: string, password: string) {
     await (await this.getUsernameField()).fill(username);
     await (await this.getPasswordField()).fill(password);
     await (await this.getNextButton()).click();
   }
 
-  // Step 2: Code form — same page, revealed after credentials
+  /**
+   * Returns the locator for the one-time code input field on the OTP page.
+   */
   async getCodeField() {
-    // Find the OTP input by type or label
-    return this.page.locator('input[type="password"], input[name*="code" i], input[id*="code" i]').last();
+    return this.page.getByRole('textbox', { name: 'One-time code' });
   }
 
+  /**
+   * Scrapes the page body for a 6-digit code and returns the first match.
+   *
+   * Intended for test environments where the OTP is rendered on the page
+   * for debugging/testing purposes.
+   *
+   * @returns The first 6-digit numeric string found on the page.
+   * @throws Error if no 6-digit code is present on the page.
+   */
   async readDisplayedCode(): Promise<string> {
-    // The practice site displays the code in a success flash or body text
-    // Try multiple strategies: the flash message, or any standalone 6-digit text
-    const flashLocator = this.page.locator('.flash.success, .flash.error');
-    const flashText = await flashLocator.textContent().catch(() => null);
-    if (flashText) {
-      const match = flashText.match(/\d{6}/);
-      if (match) return match[0];
-    }
-
-    // Fallback: scan body text for a 6-digit number
-    const body = await this.page.locator('body').textContent();
-    const match = body?.match(/\b\d{6}\b/);
-    if (!match) throw new Error('No 6-digit code found on page');
+    const pageText = await this.page.locator('body').textContent();
+    const match = pageText?.match(/\b\d{6}\b/);
+    if (!match) throw new Error('Could not find a 6-digit code on the page.');
     return match[0];
   }
 
+  /**
+   * Fills the OTP field with the given code and clicks the "Verify" button.
+   *
+   * @param code - The one-time code to submit.
+   */
   async submitCode(code: string) {
-    const field = await this.getCodeField();
-    await field.fill(code);
-    await this.page.getByRole('button', { name: /Verify|Submit/i }).click();
+    await (await this.getCodeField()).fill(code);
+    await this.page.getByRole('button', { name: 'Verify' }).click();
   }
 
-  // Assertions
+  /**
+   * Asserts that an error flash message is visible and matches the given
+   * text or regular expression.
+   *
+   * @param message - Expected error text or pattern.
+   */
   async expectError(message: string | RegExp) {
     await expect(this.page.locator('.flash.error')).toContainText(message);
   }
 
+  /**
+   * Asserts that the user has reached the secure area, indicated by a success
+   * flash message referencing the "secure area".
+   */
   async expectSuccess() {
     await expect(this.page.locator('.flash.success')).toContainText(/secure area/i);
-    // Or check for URL change to /secure if that's the practice site behavior
-    // await expect(this.page).toHaveURL(/\/secure/);
   }
 
+  /**
+   * Asserts that the current URL is the two-factor login page.
+   */
   async expectOnLoginPage() {
-    await expect(this.page).toHaveURL(/\/login/);
+    await expect(this.page).toHaveURL(/\/two_factor$/);
   }
 
+  /**
+   * Asserts that the OTP input field is visible, confirming the user is on
+   * the code verification page.
+   */
   async expectOnCodePage() {
-    // The code step may be on the same /login URL — just verify the code field is visible
-    const codeField = await this.getCodeField();
-    await expect(codeField).toBeVisible();
+    await expect(await this.getCodeField()).toBeVisible();
   }
 }
-
-// // import { Page, expect } from '@playwright/test';
-
-// export class TwoFactorPage {
-//   constructor(private page: Page) {}
-
-//   // Step 1
-//   async goto() {
-//     await this.page.goto('/two_factor');
-//   }
-
-//   async getUsernameField() {
-//     return this.page.getByLabel('Username');
-//   }
-
-//   async getPasswordField() {
-//     return this.page.getByLabel('Password');
-//   }
-
-//   async getNextButton() {
-//     return this.page.getByRole('button', { name: 'Next' });
-//   }
-
-//   async submitCredentials(username: string, password: string) {
-//     await (await this.getUsernameField()).fill(username);
-//     await (await this.getPasswordField()).fill(password);
-//     await (await this.getNextButton()).click();
-//   }
-
-//   // Step 2
-//   async getCodeField() {
-//     return this.page.getByLabel(/one-time code|code/i);
-//   }
-
-//   async readDisplayedCode(): Promise<string> {
-//     // Practice site displays the code on-screen
-//     const codeElement = this.page.locator('text=/\\d{6}/').first();
-//     const text = await codeElement.textContent();
-//     const match = text?.match(/\d{6}/);
-//     if (!match) throw new Error('No 6-digit code found on page');
-//     return match[0];
-//   }
-
-//   async submitCode(code: string) {
-//     await (await this.getCodeField()).fill(code);
-//     await this.page.getByRole('button', { name: /Verify|Submit/i }).click();
-//   }
-
-//   // Assertions
-//   async expectError(message: string | RegExp) {
-//     await expect(this.page.locator('.flash.error')).toContainText(message);
-//   }
-
-//   async expectSuccess() {
-//     await expect(this.page.locator('.flash.success')).toContainText(/secure area/i);
-//   }
-
-//   async expectOnLoginPage() {
-//     await expect(this.page).toHaveURL(/\/two_factor$/);
-//   }
-
-//   async expectOnCodePage() {
-//     await expect(this.page).toHaveURL(/\/two_factor\/code/);
-//   }
-// }
