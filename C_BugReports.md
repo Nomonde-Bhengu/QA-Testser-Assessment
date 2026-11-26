@@ -33,14 +33,8 @@
 **Expected:** After N failures, account should be temporarily locked or submission delayed.
 **Actual:** Error shown each time; no throttling observed.
 
-**Severity:** High (if this were production; for practice site, informational)
+**Severity:** High (if this were production)
 **Priority:** High
-**Note:** Within the 10-attempt limit per assessment instructions.
-
----
-
-
-
 
 ---
 
